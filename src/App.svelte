@@ -5,7 +5,7 @@
 
 <script>
 //when using node sass in the webpack to process this scss syntax within this component fails.
-//just importing a scss file works for cypres unit test (that file does not contain any scss specific syntax)
+//just importing a scss file works for cypres unit test, althought styles that include scss syntax are not applied in the test
 </script>
 
 <style type="text/scss">
