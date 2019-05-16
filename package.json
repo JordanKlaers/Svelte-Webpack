@@ -1,36 +1,77 @@
 {
-  "name": "svelte-app",
-  "version": "1.0.0",
-  "devDependencies": {
-    "@cypress/webpack-preprocessor": "^4.0.3",
-    "cross-env": "^5.2.0",
-    "css-loader": "^2.1.1",
-    "cypress": "^3.2.0",
-    "cypress-svelte-unit-test": "^1.5.0",
-    "file-loader": "^3.0.1",
-    "mini-css-extract-plugin": "^0.6.0",
-    "node-sass": "^4.12.0",
-    "sass-loader": "^7.1.0",
-    "serve": "^11.0.0",
-    "style-loader": "^0.23.1",
-    "svelte": "^3.0.0",
-    "svelte-loader": "2.13.3",
-    "webpack": "^4.30.0",
-    "webpack-cli": "^3.3.0",
-    "webpack-dev-server": "^3.3.1"
-  },
-  "scripts": {
-    "build": "cross-env NODE_ENV=production webpack",
-    "dev": "webpack-dev-server --content-base public",
-    "local": "webpack & webpack-dev-server --content-base public"
-  },
-  "standard": {
-    "globals": [
-      "cy",
-      "Cypress"
-    ]
-  },
-  "dependencies": {
-    "sass": "^1.20.1"
-  }
+	"name": "svelte-app",
+	"version": "1.0.0",
+	"devDependencies": {
+		"cross-env": "^5.2.0",
+		"css-loader": "^2.1.1",
+		"file-loader": "^3.0.1",
+		"jest": "^24.8.0",
+		"jest-transform-svelte": "^2.0.0",
+		"mini-css-extract-plugin": "^0.6.0",
+		"node-sass": "^4.12.0",
+		"sass-loader": "^7.1.0",
+		"serve": "^11.0.0",
+		"style-loader": "^0.23.1",
+		"svelte": "^3.0.0",
+		"svelte-jest": "^0.2.0",
+		"svelte-loader": "2.13.3",
+		"webpack": "^4.30.0",
+		"webpack-cli": "^3.3.0",
+		"webpack-dev-server": "^3.3.1"
+	},
+	"scripts": {
+		"build": "cross-env NODE_ENV=production webpack",
+		"dev": "webpack-dev-server --content-base public",
+		"local": "webpack & webpack-dev-server --content-base public"
+	},
+	"standard": {
+		"globals": [
+			"cy",
+			"Cypress"
+		]
+	},
+	"dependencies": {
+		"sass": "^1.20.1"
+	},
+	"jest": {
+		"reporters": [
+			"default"
+		],
+		"transform": {
+			"^.+\\.js$": "babel-jest",
+			"^.+\\.svelte$": "jest-transform-svelte"
+		},
+		"moduleDirectories": [
+			"node_modules",
+			"src"
+		],
+		"moduleFileExtensions": [
+			"js",
+			"json",
+			"html"
+		],
+		"moduleNameMapper": {
+			"\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/test/fileMock.js",
+			"\\.(css|scss)$": "identity-obj-proxy"
+		},
+		"transformIgnorePatterns": [
+			"<rootDir>/node_modules/(?!svelte)"
+		],
+		"collectCoverageFrom": [
+			"src/**/*.{js,html}",
+			"!src/{example,appclass}.js",
+			"!**/node_modules/**",
+			"!**/vendor/**"
+		],
+		"coverageThreshold": {
+			"global": {
+				"branches": 70,
+				"functions": 70,
+				"lines": 70
+			}
+		}
+	},
+	"jest-junit": {
+		"outputDirectory": "./coverage"
+	}
 }

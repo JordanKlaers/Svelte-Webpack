@@ -28,8 +28,8 @@
 
 <style type="text/scss" lang="scss">
 @import './assets/styles/test.scss';
-$color: red;
+$color: pink;
 .text {
-	border: 2px solid $color;
+	border: 5px solid $color;
 }
 </style>
