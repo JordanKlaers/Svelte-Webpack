@@ -13,8 +13,12 @@
 const webpack = require('@cypress/webpack-preprocessor');
 
 module.exports = (on, config) => {
+	// try {
 	const options = {
 		webpackOptions: require('../../webpack.config.js')
 	}
 	on('file:preprocessor', webpack(options))
+	// } catch (err) {
+	// 	throw new Error(err);//err;
+	// }
 }

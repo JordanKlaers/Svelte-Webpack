@@ -2,7 +2,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const mode = process.env.NODE_ENV || 'development';
 const prod = mode === 'production';
 //commenting out line 5 and as well as line 31-49 will aloow for the cypress open command to run, but running the test fails due to the syntax issue in the svelte file
-// const sass = require('node-sass');
+const sass = require('node-sass');
 
 module.exports = {
 	entry: {
@@ -26,27 +26,27 @@ module.exports = {
 				use: {
 					loader: 'svelte-loader',
 					options: {
-						emitCss: true,
-						hotReload: true
-						// style: ({ content, attributes }) => {
-						// 	if (attributes.type !== 'text/scss') return;
+						// emitCss: true,
+						hotReload: true,
+						style: ({ content, attributes }) => {
+							if (attributes.type !== 'text/scss') return;
 
-						// 	return new Promise((fulfil, reject) => {
-						// 		sass.render({
-						// 			data: content,
-						// 			includePaths: ['src'],
-						// 			sourceMap: true,
-						// 			outFile: 'x' // this is necessary, but is ignored
-						// 		}, (err, result) => {
-						// 			if (err) return reject(err);
+							return new Promise((fulfil, reject) => {
+								sass.render({
+									data: content,
+									includePaths: ['src'],
+									sourceMap: true,
+									outFile: 'x' // this is necessary, but is ignored
+								}, (err, result) => {
+									if (err) return reject(err);
 
-						// 			fulfil({
-						// 				code: result.css.toString(),
-						// 				map: result.map.toString()
-						// 			});
-						// 		});
-						// 	});
-						// }
+									fulfil({
+										code: result.css.toString(),
+										map: result.map.toString()
+									});
+								});
+							});
+						}
 					}
 				}
 			},
