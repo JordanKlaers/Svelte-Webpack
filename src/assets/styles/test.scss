@@ -1,5 +1,6 @@
 .text {
-	color: green;
+	$color: green;
+	color: $color;
 	font-size: 30px;
 	font-weight: bold;
 }
