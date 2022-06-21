@@ -1,220 +1,344 @@
-<div id="chart" class="chart-container"></div>
-<button on:click={animate}>animate</button>
+<div ref="chart-container" id="chart" class="chart-container"></div>
+<!-- <button on:click={animate}>animate</button> -->
 <script>
 	const d3 = require('d3');
 	import { onMount } from 'svelte';
-	let container;
-	var dataset = [
-		{ name: 'green', percent: 50 },
-		{ name: 'pink', percent: 50 }
-		// { date: '20', percent: 13.68 },
-		// { date: '30', percent: 8.71 },
-		// { date: '40', percent: 6.01 }
-	];
-	var animationDuration = 2000;
-	var animationSliceDelay = 0;
-	let width = 300;
-	let height = 300;
-	let radius = (width-2)/2;
-	let highlightIndex = 0;
-	var w=300,h=300;
-	var highlightOuterRadius=w/2;
-	var highlightInnerRadius=90;
-	var donutOuterRadius = highlightOuterRadius - 10;
-	var donutInnerRadius = highlightInnerRadius + 10
-	var path;
-	var highlightedPaths;
-	var highlightedArc;
-	var arc;
+	
+	'use strict';
 
-	onMount(()=> { 
-
-		for (let entry  of dataset) {
-			entry.delay = animationSliceDelay
-			entry.duration = (entry.percent / 100) * animationDuration
-			animationSliceDelay += (entry.percent / 100) * animationDuration
-		}
-
-	var pie=d3.pie()
-		.value(function(d){return d.percent})
-		.sort(null)
-		.padAngle(0.01);
-
-
-
-	arc=d3.arc()
-		.outerRadius(donutOuterRadius)
-		.innerRadius(donutInnerRadius);
-
-	//commenting out the outer and inner methods requires you to set them via the each function by adding outerRadius and innerRadius to the data
-	highlightedArc = d3.arc()
-		.outerRadius(highlightOuterRadius)
-		.innerRadius(highlightInnerRadius);
-
-
-	var svg = d3.select('#chart')
-		.append("svg")
-		.attr('width', w)
-		.attr('height', h)
-		.append('g')
-		.attr('transform', `translate(${w/2},${h/2})`);
-
-
-	path = svg.selectAll('.donutPath')
-		.data(pie(dataset))
-		.enter()
-		.append('path')
-		.attr('class', 'donutPath')
-		.attr('d', arc)
-		.attr('fill', function(d,i){ return d.data.name	});
-
-	//clicking on a donut path will have the highglight path become visible by toggling a visibility class
-	//requires the highlighted radius's to be set to the ending outer/inner radius, not changed via the hover event
-	path.on("click", (d,i)=> {
-		highlightIndex = i;
-		highlightedPaths.attr('class', 'highlightPath')
-		highlightedPaths.filter((d,i)=> i === highlightIndex)
-			.attr('class', 'highlightPath visible')
+	onMount(() => {
+		underlyingFundsBarChart({
+			chartId: "#chart",
+			datapoints: [
+				{ shape: "triangle",	color: "orange",	return: 85,	volatility: 1 },
+				{ shape: "square",		color: "orange",	return: 73,	volatility: 2 },
+				{ shape: "circle",		color: "orange",	return: 52,	volatility: 3 },
+				{ shape: "triangle",	color: "green",		return: 18, volatility: 14 },
+				{ shape: "square",		color: "green",		return: 16, volatility: 13 },
+				{ shape: "circle",		color: "green",		return: 13, volatility: 16 },
+				{ shape: "triangle",	color: "purple",	return: 85, volatility: 27 },
+				{ shape: "square",		color: "purple",	return: 82, volatility: 32 },
+				{ shape: "circle",		color: "purple",	return: 71, volatility: 43 },
+				{ shape: "triangle",	color: "blue",		return: 90, volatility: 60 },
+				{ shape: "square",		color: "blue",		return: 88, volatility: 56 },
+				{ shape: "circle",		color: "blue",		return: 85, volatility: 43 },
+				{ shape: "triangle",	color: "pink",		return: 30, volatility: 30 },
+				{ shape: "square",		color: "pink",		return: 40, volatility: 40 },
+				{ shape: "circle",		color: "pink",		return: 50, volatility: 50 }
+			]
+		});
 	})
 
-	//on load, animate the donut
-	path.transition()
-		.duration(animationDuration)
-		.attrTween('d', function(d) {
-			const angleInterpolate = d3.interpolate(d.startAngle, d.endAngle);
-			const endAng = oldT => {
-				const currentDuration = oldT * animationDuration;
-				const newT = Math.min(Math.max(currentDuration - d.data.delay, 0), d.data.duration) / d.data.duration;
-				return angleInterpolate(newT);
-			};
-			//changing the start and end angle in the first object to 0 makes every slice appear to grow from the same spot
-			var interpolate = d3.interpolate({startAngle: d.startAngle, endAngle: d.startAngle}, d);
-			return function(t) {
-				d.endAngle = endAng(t)
-				return arc(d);
-			};
-		});
+	var underlyingFundsBarChart = function (config) {
+		
+		/*-----------------------
+			variables
+		-----------------------*/
+		var svgVBHeight = 1000;
+		var svgVBWidth = 1000;
+
+		var tickStep = 10;
+		var yTicks = 10;
+		var xTicks = 10;
+		var tickStrokeThickness = 4;
+
+		var yAxisXPosition = svgVBWidth * 0.14;
+		var xAxisYPosition = svgVBHeight - (svgVBHeight * 0.16);
+
+		var xScale = d3.scaleLinear()
+			.domain([0, 100])
+			.range([yAxisXPosition, svgVBWidth]);
+		var yScale = d3.scaleLinear()
+			.domain([0, 100])
+			.range([xAxisYPosition, 0]);
+
+		// Styles
+		var axisBGColor = "#f3f3f3";
+		var axisTickColor = "#f3f3f3";
+		var axisTickColorInverse = "white";
+		var chartBGColor = "white";
+		var chartFavorableBGColor = axisBGColor;
+		var axisTicksFontSize = 20;
+		var axisTickGap = 10;
+		var axisLabelGap = 20;
+		var axisLabelFontSize = 23;
+
+		/*-----------------------
+			Data
+		-----------------------*/
 
 
-	highlightedPaths = svg.selectAll('.highlightPath')
-		.data(pie(dataset))
-		.enter()
-		.append('path')
-		//setting the radius data to match the donut radius
-		.each(function(d) {
-			d.outerRadius = donutOuterRadius;
-			d.innerRadius = donutInnerRadius;
-		})
-		.attr('class', 'highlightPath visible')
-		//dynamic class on load based on selected index
-		//function(d,i){ return `highlightPath ${highlightIndex === i ? 'visible' : ''}` })
 
-		//actually  draws the highlighted arcs using the same arc function that draws the main donut arcs
-		.attr('d', arc)
-		.attr('fill', function(d,i){ return d.data.name });
-	
+		/*-----------------------
+			render svg, axies, background
+		-----------------------*/
+		var svg = d3.select(config.chartId)
+			.append("svg")
+			.attr("viewBox", "0 0 " + svgVBWidth + " " + svgVBHeight)
+			.attr("preserveAspectRatio", "xMidYMid meet");
 
-	highlightedPaths
-		.on("click", arcTween(0))
-		// .on("mouseout", arcTween(donutOuterRadius, donutInnerRadius, 150));
+		svg.append("rect")
+			.attr("width", yAxisXPosition)
+			.attr("height", svgVBHeight)
+			.attr("fill", axisBGColor)
+		svg.append("rect")
+			.attr("width", svgVBWidth)
+			.attr("height", svgVBHeight - xAxisYPosition)
+			.attr("y", xAxisYPosition)
+			.attr("fill", axisBGColor)
+		
+		//add axies and style
+		var horizontalGradient = svg.append('defs')
+			.append('linearGradient')
+			.attr('id', 'y-line-gradient')
+		horizontalGradient.append('stop')
+			//This offst is half the width of the graph + half the width of the tick, so that the white does not render over the gray of the other tick
+			//The vertical axis does not need this because it is renderd under the horizontal ticks so it cant be seen
+			.attr("offset", `${(50 + (tickStrokeThickness / (svgVBWidth - yAxisXPosition) * 100) / 2)}%`)
+			.attr('stop-color', axisTickColor);
+		horizontalGradient.append('stop')
+			.attr("offset", `${((50 + (tickStrokeThickness / (svgVBWidth - yAxisXPosition) * 100) / 2)) + 0.0000001}%`)
+			.attr('stop-color', axisTickColorInverse);
 
-	highlightedPaths.transition()
-		.duration(animationDuration)
-		.attrTween('d', function(d) {
-			const angleInterpolate = d3.interpolate(d.startAngle, d.endAngle);
-			const endAng = precentageOfAnimationCompleted => {
-				//convert percentage of time passed by length of total animation
-				const currentDuration = precentageOfAnimationCompleted * animationDuration;
-				//determin if the amount of time passed is greater than the delay of the slice (results in only one slice at a give calculation actually animating) and animate the slice 
-				//so if the time passed is 1 second for a two second total animation and there are two slices both with a value of 50%
-				//than the second slice (whos duration will take one second, calculated previously) will begin its portion of the animation
-				const newT = Math.min(Math.max(currentDuration - d.data.delay, 0), d.data.duration) / d.data.duration;
-				console.log('newT??', newT);
-				return angleInterpolate(newT);
-			};
-			// var interpolate = d3.interpolate({startAngle: d.startAngle, endAngle: d.startAngle}, d);
-			return function(t) {
-				//the use of the arc (or highlightedArc function) in the transition overrides the one used in the base creation of the highlighted arcs
-				d.endAngle = endAng(t)
-				return arc(d);
-			};
-		});
+		var verticalGradient = svg.append('defs')
+			.append('linearGradient')
+			.attr('id', 'x-line-gradient')
+			.attr("x1", "0%")
+			.attr("x2", "0%")
+			.attr("y1", "0%")
+			.attr("y2", "100%")
+		verticalGradient.append('stop')
+			.attr("offset", "49.9999%")
+			.attr('stop-color', axisTickColorInverse);
+		verticalGradient.append('stop')
+			.attr("offset", "50%")
+			.attr('stop-color', axisTickColor);
 
+		svg.append("rect")
+			.attr("x", yAxisXPosition + ((svgVBWidth - yAxisXPosition) / 2))
+			.attr("width", (svgVBWidth - yAxisXPosition) / 2)
+			.attr("y", "0")
+			.attr("height", xAxisYPosition / 2)
+			.attr("fill", chartFavorableBGColor);
 
-	function arcTween(delay) {
-		return function() {
-			//set all highlighted paths to the same radius as the donut paths
-			highlightedPaths.transition()
-				.duration(500)
-				.delay(delay)
-				.attrTween("d", function(d) {
-					//interpolate from the radius values on the data object, which are either the initial value that matches the main donut arc radius, which was set on creation
-					// or the data value matches the greater radius set from the animation below.
-					var outerInterpolate = d3.interpolate(d.outerRadius, donutOuterRadius);
-					var innerInterpolate = d3.interpolate(d.innerRadius, donutInnerRadius);
-					return function(t) { 
-						d.outerRadius = outerInterpolate(t);
-						d.innerRadius = innerInterpolate(t);
-						var arc = d3.arc()
-						return arc(d); };
-				});
-			//set the highlighted path that was clicked to have the greate radius
-			// console.log('d3.select(this)', d3.select(this));
-			d3.select(this)
-				.transition()
-				.duration(500)
-				.delay(delay)
-				.attrTween("d", function(d) {
-					var outerInterpolate = d3.interpolate(d.outerRadius, highlightOuterRadius);
-					var innerInterpolate = d3.interpolate(d.innerRadius, highlightInnerRadius);
-					return function(t) { 
-						d.outerRadius = outerInterpolate(t);
-						d.innerRadius = innerInterpolate(t);
-						var arc = d3.arc()
-						return arc(d); };
-				});
-		};
-	}
-
-	});
-
-	const animate = () => {
-		path.transition()
-			.duration(animationDuration)
-			.attrTween('d', function(d) {
-				//changing the start and end angle in the first object to 0 makes every slice appear to grow from the same spot
-				var interpolate = d3.interpolate({startAngle: d.startAngle, endAngle: d.startAngle}, d);
-				return function(t) {
-					return arc(interpolate(t));
-				};
+		var xAxis = d3.axisBottom()
+			.scale(xScale)
+			.tickFormat(value => `${value}%`);
+		var yAxis = d3.axisLeft()
+			.scale(yScale)
+			.tickFormat(value => `${value}%`);
+		svg.append("g")
+			.attr("class", "x-axis")
+			.attr("style", `font-size: ${axisTicksFontSize}`)
+			.attr("transform", "translate(0, " + xAxisYPosition + ")")
+			.call(xAxis)
+			.call(a => {
+				a.select(".domain").remove();
 			});
-		highlightedPaths.each(function(d) {
-			d.outerRadius = donutOuterRadius;
-			d.innerRadius = donutInnerRadius;
-		})
-		highlightedPaths.transition()
-			.duration(animationDuration)
-			.attrTween('d', function(d) {
-				var interpolate = d3.interpolate({startAngle: d.startAngle, endAngle: d.startAngle}, d);
-				return function(t) {
-					//the use of the arc (or highlightedArc function) in the transition overrides the one used in the base creation of the highlighted arcs
-					return arc(interpolate(t));
-				};
+		svg.append("g")
+			.attr("class", "y-axis")
+			.attr("style", `font-size: ${axisTicksFontSize}`)
+			.attr("transform", "translate(" + yAxisXPosition + ", 0)")
+			.call(yAxis)
+			.call(a => {
+				a.select(".domain").remove();
 			});
-	}
 
+		d3.selectAll('.y-axis .tick line')
+			.each(function (d, i) {
+				d3.select(this)
+					.attr("y1", "0")
+					.attr("y2", "0.000000000000000000000001")
+					.attr("x1", "0")
+					.attr("x2", svgVBWidth - yAxisXPosition)
+					.attr("stroke-width", tickStrokeThickness)
+					.attr("stroke", axisTickColor);
+				if (i > (yTicks / 2) && i < yTicks) d3.select(this).attr("stroke", "url(#y-line-gradient)");
+			})
+		d3.selectAll('.x-axis .tick line')
+			.each(function (d, i) {
+				d3.select(this)
+					.attr("y1", "0")
+					.attr("y2", -xAxisYPosition)
+					.attr("x1", "0")
+					.attr("x2", "0.000000000000000000000001")
+					.attr("stroke-width", tickStrokeThickness)
+					.attr("stroke", axisTickColor);
+				if (i > (xTicks / 2) && i < xTicks) d3.select(this).attr("stroke", "url(#x-line-gradient)");
+			})
+		d3.select(".y-axis .tick:last-of-type text")
+			.attr("transform", function() {
+				return `translate(0 ${this.getBBox().height / 2})`;
+			});
+		d3.selectAll(".x-axis .tick text")
+			.attr("transform", function(d, i) {
+				return i == xTicks
+					? `translate(-${this.getBBox().width / 2} ${axisTickGap})`
+					: `translate(0 ${axisTickGap})`;
+			});
+		
+		svg.append('text')
+			.attr("class", "x-label")
+			.attr("text-anchor", "middle")
+			.attr("x", ((svgVBWidth - yAxisXPosition) / 2) + yAxisXPosition)
+			// .attr("y", 0)
+			.attr("y", xAxisYPosition + axisLabelFontSize + axisTicksFontSize + axisTickGap + axisLabelGap)
+			.attr("style", `font-size: ${axisLabelFontSize}`)
+			.text("Volatility Success vs. Morningstar Peer Averages");
+
+		svg.append('text')
+			.attr("class", "y-label")
+			.attr("text-anchor", "middle")
+			.attr("x", yAxisXPosition / 3)
+			.attr("y", xAxisYPosition / 2)
+			.attr("style", `font-size: ${axisLabelFontSize};`)
+			.attr("transform", `rotate(-90 ${yAxisXPosition / 3} ${xAxisYPosition / 2})`)
+			.text("Volatility Success vs. Morningstar Peer Averages");
+
+		svg.append("text")
+			.attr("text-anchor", "end")
+			.attr("x", svgVBWidth - 30)
+			.attr("y", 30)
+			.attr("style", `font-size: ${axisLabelFontSize};`)
+			.text("Higher Success of Returns and Volatility");
+
+		/*-----------------------
+			Render data points
+		-----------------------*/
+		var shapeScale = 30;
+		//point to pixel. call ".invert" for pixel to pt
+		var verticalConversion = d3.scaleLinear()
+			.domain([0, svgVBHeight])
+			.range([0, document.querySelector("#chart").clientHeight]);
+		var horizontalConversion = d3.scaleLinear()
+			.domain([0, svgVBWidth])
+			.range([0, document.querySelector("#chart").clientWidth]);
+
+		svg.selectAll('.data-point')
+			.data(config.datapoints)
+			.enter()
+			.append("path")
+			.attr("class", "data-point")
+			.attr("d", function (d) {
+				if (d.shape == 'triangle') return `M0,0 L${1 * shapeScale},0 L${0.5 * shapeScale},${0.866 * shapeScale} L0,0`;
+				if (d.shape == 'square') return `M0,0 L${0.866 * shapeScale},0 L${0.866 * shapeScale},${0.866 * shapeScale} L0,${0.866 * shapeScale} L0,0`;
+				if (d.shape == "circle") return `M0,${0.433 * shapeScale} a${0.433 * shapeScale},${0.433 * shapeScale} 0 1,1 ${0.866 * shapeScale},${0 * shapeScale} a${0.433 * shapeScale},${0.433 * shapeScale} 0 1,1 ${0.866 * -shapeScale},${0 * shapeScale}`;
+			})
+			.attr("transform", function (d) {
+				//return is y value
+
+				var position = `translate(${xScale(d.volatility - 1.5)}, ${yScale(d.return + 1.299)})`
+				// if (d.shape == "triangle") position += `rotate(60 ${xScale(d.volatility - 1.5)}, ${yScale(d.return + 1.299)})`;
+				return position;
+			})
+			.attr("fill", function (d) {
+				return d.color;
+			})
+			.attr("stroke-width", "5")
+			.on("mouseover", function(d, i) {
+				d3.select(`#data-point-hover-${i}`)
+					.classed("visible", true);
+			})
+			.on("mouseout", function(d, i) {
+				d3.select(`#data-point-hover-${i}`)
+					.classed("visible", false);
+			});
+
+		d3.select("#chart")
+			.selectAll('.chart-hover')
+			.data(config.datapoints)
+			.enter()
+			.append("div")
+			.attr("class", "chart-hover")
+			.attr("id", function(d,i) { return `data-point-hover-${i}` })
+			.attr("style", function (d) {
+				return `top: ${verticalConversion(yScale(d.return))}px; left: ${horizontalConversion(xScale(d.volatility))}px; transform: translateY(-33%) translateX(20px)`;
+			})
+			.html(`
+				<div>T. Rowe Price Retirement Series</div>
+				<div>2020 Vintage</div>
+				<dl>
+					<div><dd>72%</dd><dt>Return Success</dt></div>
+					<div><dd>41%</dd><dt>Volatility Success</dt></div>
+				</dl>
+			`);
+			
+		window.addEventListener('resize', function () {
+			verticalConversion = d3.scaleLinear()
+				.domain([0, svgVBHeight])
+				.range([0, document.querySelector("#chart").clientHeight]);
+			horizontalConversion = d3.scaleLinear()
+				.domain([0, svgVBWidth])
+				.range([0, document.querySelector("#chart").clientWidth]);
+			d3.selectAll('.chart-hover')
+				.attr("style", function (d) {
+					return `top: ${verticalConversion(yScale(d.return))}px; left: ${horizontalConversion(xScale(d.volatility))}px; transform: translateY(-33%) translateX(20px)`;
+				});
+		})
+	};
 
 </script>
 
 <style type="text/scss">
-.chart-container{
-	padding:25px;
-}
-:global(.highlightPath) {
-	opacity: 0.3;
-	visibility: hidden;
-	&.visible {
-		visibility: initial;
+:global(.chart-container) {
+	position: relative;
+	width: 100%;
+
+	&:before {
+		display: block;
+		content: " ";
+		width: 100%;
+		padding-top: 100%;
+	}
+	svg {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		.stop-left {
+			stop-color: #3f51b5;  /* Indigo */
+		}
+
+		.stop-right {
+			stop-color: #009688;  /* Teal */
+		}
+
+		.filled {
+			fill: url(#mainGradient);
+			stroke: url(#mainGradient);
+		}
+		.data-point:hover {
+			cursor: pointer;
+		}
+	}
+	.chart-hover {
+		visibility: hidden;
+		position: absolute;
+		border: 1px solid gray;
+		background-color: white;
+		padding: 7px;
+		width: 170px;
+		&.visible {
+			visibility: visible;
+		}
+		& > :global(div:first-of-type ) {
+			font-weight: bold;
+		}
+		& > :global(div) {
+			margin-bottom: 10px;
+		}
+		dl {
+			margin: 0;
+			dd {
+				display: inline-block;
+				margin: 0 10px 0 0;
+			}
+			dt {
+				display: inline-block;
+			}
+		}
 	}
 }
+
 </style>
